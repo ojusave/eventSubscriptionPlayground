@@ -1,0 +1,26 @@
+{
+  "name": "eventsplayground",
+  "version": "1.0.0",
+  "description": "This is a package.json for events subscription playground",
+  "main": "server.js",
+  "scripts": {
+    "test": "node server.js",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "NA"
+  },
+  "keywords": [
+    "Webhook",
+    "websocket",
+    "authentication",
+    "events",
+    "subscription",
+    "real",
+    "time",
+    "notifications"
+  ],
+  "author": "Ojus Save",
+  "license": "ISC"
+}
