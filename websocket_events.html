@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Events</title>
+    <link rel="stylesheet" href="styles.css">
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const eventsTable = document.getElementById('eventsTable');
+            
+            const ws = new WebSocket('ws://localhost:3000'); // Connect to your server
+
+            ws.onmessage = function(event) {
+                const eventData = JSON.parse(event.data);
+                const row = eventsTable.insertRow();
+
+                // Using the same field names from events.html
+                const cell1 = row.insertCell(0);
+                const cell2 = row.insertCell(1);
+                const cell3 = row.insertCell(2);
+                cell1.textContent = eventData.event;
+                cell2.textContent = eventData.type;
+                cell3.textContent = eventData.payload.object.id;
+            };
+        });
+    </script>
+</head>
+<body>
+    <h1>WebSocket Events</h1>
+    <table id="eventsTable">
+        <thead>
+            <tr>
+                <th>Event</th>
+                <th>Type</th>
+                <th>ID</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+</body>
+</html>
