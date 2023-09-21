@@ -15,7 +15,10 @@
         <option value="basic">Basic Header Authentication</option>
         <option value="custom">Custom Header Authentication</option>
         <option value="token">Token Header Authentication</option>
+<<<<<<< HEAD
         <option value="websocket">Websocket</option>
+=======
+>>>>>>> b7fd4c16cb34f57177fd42826744770d236f9312
     </select>
 
     <div id="noneAuth" style="display: none;">
@@ -41,11 +44,16 @@
         Secret Token: <input type="text" id="secretTokenToken">
         Client ID: <input type="text" id="clientID">
         Client Secret: <input type="text" id="clientSecret">
+<<<<<<< HEAD
         Token URL: <input type="text" value="https://ojus.ngrok.dev/webhook-endpoint/oauth" id="tokenURL">
+=======
+        Token URL: <input type ="text" value ="https://ojus.ngrok.dev/webhook-endpoint/oauth" id="tokenURL">
+>>>>>>> b7fd4c16cb34f57177fd42826744770d236f9312
 
         <button onclick="submitToken()">Submit</button>
     </div>
 
+<<<<<<< HEAD
     <div id="websocketForm" style="display: none;">
        
         <input type="text" id="websocketClientID" placeholder="Client ID">
@@ -56,6 +64,8 @@
     </div>
     
 
+=======
+>>>>>>> b7fd4c16cb34f57177fd42826744770d236f9312
     <script>
         function showOptions() {
             const authentication = document.getElementById("authentication").value;
@@ -63,7 +73,10 @@
             document.getElementById("basicAuth").style.display = 'none';
             document.getElementById("customAuth").style.display = 'none';
             document.getElementById("tokenAuth").style.display = 'none';
+<<<<<<< HEAD
             document.getElementById("websocketForm").style.display = 'none';  
+=======
+>>>>>>> b7fd4c16cb34f57177fd42826744770d236f9312
 
             if (authentication === "none") {
                 document.getElementById("noneAuth").style.display = 'block';
@@ -74,9 +87,12 @@
             } else if (authentication === "token") {
                 document.getElementById("tokenAuth").style.display = 'block';
             }
+<<<<<<< HEAD
             else if (authentication === "websocket") {
         document.getElementById("websocketForm").style.display = 'block';  
     }
+=======
+>>>>>>> b7fd4c16cb34f57177fd42826744770d236f9312
         }
 
         function submitNone() {
@@ -91,10 +107,17 @@
                     secretToken: secretToken
                 })
             })
+<<<<<<< HEAD
                 .then(response => response.json())
                 .then(data => {
                     window.location.href = data.endpointURL;
                 });
+=======
+            .then(response => response.json())
+            .then(data => {
+                window.location.href = data.endpointURL;
+            });
+>>>>>>> b7fd4c16cb34f57177fd42826744770d236f9312
         }
 
         function submitBasic() {
@@ -115,6 +138,7 @@
                     secretToken: secretToken
                 })
             })
+<<<<<<< HEAD
                 .then(response => response.json())
                 .then(data => {
                     window.location.href = data.endpointURL;
@@ -142,6 +166,35 @@
                     window.location.href = data.endpointURL;
                 });
         }
+=======
+            .then(response => response.json())
+            .then(data => {
+                window.location.href = data.endpointURL;
+            });
+        }
+
+        function submitCustom() {
+    const secretToken = document.getElementById("secretTokenCustom").value;
+    const customHeader = document.getElementById("customHeader").value;
+    const customValue = document.getElementById("customValue").value
+    fetch('/configure-webhook', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            type: 'custom',
+            secretToken: secretToken,
+            customHeader: customHeader,
+            customValue: customValue
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        window.location.href = data.endpointURL;
+    });
+}
+>>>>>>> b7fd4c16cb34f57177fd42826744770d236f9312
 
         function submitToken() {
             const secretToken = document.getElementById("secretTokenToken").value;
@@ -161,6 +214,7 @@
                     tokenURL: tokenURL
                 })
             })
+<<<<<<< HEAD
                 .then(response => response.json())
                 .then(data => {
                     window.location.href = data.endpointURL;
@@ -196,3 +250,14 @@
 </body>
 
 </html>
+=======
+            .then(response => response.json())
+            .then(data => {
+                window.location.href = data.endpointURL;
+            });
+        }
+    </script>
+</body>
+
+</html>
+>>>>>>> b7fd4c16cb34f57177fd42826744770d236f9312

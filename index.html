@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<<<<<<< HEAD
     <title>Webhook Authentication</title>
 </head>
 
@@ -196,3 +197,28 @@
 </body>
 
 </html>
+=======
+    <title>Zoom Webhook Configurator</title>
+</head>
+
+<body>
+    <h2>Select Method:</h2>
+    <select id="method" onchange="navigate()">
+        <option value="default">Select</option>
+        <option value="webhook">Webhook</option>
+        <option value="websocket">WebSocket</option>
+    </select>
+
+    <script>
+        function navigate() {
+            const method = document.getElementById("method").value;
+            if (method === "webhook") {
+                window.location.href = "webhook.html";
+            }
+            // Add WebSocket handling if needed
+        }
+    </script>
+</body>
+
+</html>
+>>>>>>> b7fd4c16cb34f57177fd42826744770d236f9312

@@ -3,7 +3,10 @@
 <html lang="en">
 
 <head>
+<<<<<<< HEAD
 <script src="/socket.io/socket.io.js"></script>
+=======
+>>>>>>> b7fd4c16cb34f57177fd42826744770d236f9312
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Webhook Events</title>
@@ -42,7 +45,11 @@
 <body>
 
     <div id="eventList">
+<<<<<<< HEAD
         <h2>Received Events:</h2>
+=======
+        <h2>Received Webhook Events:</h2>
+>>>>>>> b7fd4c16cb34f57177fd42826744770d236f9312
         <div id="eventsContainer"></div>
     </div>
     <div id="eventDetails">
@@ -53,6 +60,7 @@
         // Function to display event details
         function displayEventDetails(data) {
             const detailsDiv = document.getElementById('eventDetails');
+<<<<<<< HEAD
             
           
             if (data.source === 'websocket') {
@@ -68,6 +76,9 @@
                                 <h3>Body:</h3>
                                 <pre>${JSON.stringify(body, null, 2)}</pre>`;
     } else {  detailsDiv.innerHTML = `<h2>Event Details:</h2>
+=======
+            detailsDiv.innerHTML = `<h2>Event Details:</h2>
+>>>>>>> b7fd4c16cb34f57177fd42826744770d236f9312
                                     <p><strong>Method:</strong> ${data.method}</p>
                                     <p><strong>URL:</strong> ${data.url}</p>
                                     <p><strong>Host:</strong> ${data.host}</p>
@@ -78,6 +89,7 @@
                                     <h3>Body:</h3>
                                     <pre>${JSON.stringify(data.body, null, 2)}</pre>`;
         }
+<<<<<<< HEAD
     }
 
      
@@ -100,6 +112,26 @@ socket.on('webhookData', (data) => {
 
 </script>
 
+=======
+
+        // Create a WebSocket connection to the backend
+        const ws = new WebSocket('ws://localhost:3000');
+
+        // Listen for messages from the server
+        ws.addEventListener('message', (event) => {
+            const data = JSON.parse(event.data);
+            const eventElement = document.createElement('div');
+            eventElement.className = 'eventItem';
+            eventElement.textContent = data.url || 'Event'; // Displaying URL for now
+            eventElement.addEventListener('click', () => {
+                displayEventDetails(data);
+            });
+
+            // Append the event data to the left pane
+            document.getElementById("eventsContainer").prepend(eventElement);
+        });
+    </script>
+>>>>>>> b7fd4c16cb34f57177fd42826744770d236f9312
 </body>
 
 </html>
