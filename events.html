@@ -91,7 +91,12 @@ socket.on('webhookData', (data) => {
     const eventsContainer = document.getElementById('eventsContainer');
     const eventItem = document.createElement('div');
     eventItem.className = 'eventItem';
-    eventItem.textContent = data.event_name || 'Event';
+    if (data.source === 'websocket') {
+        const body = JSON.parse(data.content || "{}");
+        eventItem.textContent = body.event || 'Event';
+    } else {
+        eventItem.textContent = data.event_name || 'Event';
+    }
     eventItem.addEventListener('click', () => {
         displayEventDetails(data);
     });

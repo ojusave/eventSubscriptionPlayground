@@ -21,9 +21,12 @@ const io = socketIo(server, {
       methods: ["GET", "POST"]
     }
   });
+  const WebSocket = require('ws');
+
 
 const clientEndpointMap = new Map();
-
+const zoomWebSocketMap = new Map(); 
+const subscriptionEndpointMap = new Map();
 
 // Middleware
 app.use(express.static(path.join(__dirname, '.')));
@@ -71,6 +74,7 @@ io.on('connection', (socket) => {
 
 
 app.post('/configure-webhook', (req, res) => {
+    //const { type, clientId, clientSecret, accountId, subscriptionId } = req.body;
     const newEndpoint = `${baseURL}/webhook-endpoint/${crypto.randomBytes(10).toString('hex')}`;
     activeEndpoints.add(newEndpoint);
     const endpointData = {
@@ -97,11 +101,32 @@ app.post('/configure-webhook', (req, res) => {
     }
     
 
-    client.set(newEndpoint, JSON.stringify(endpointData), (err) => {
+    client.set(newEndpoint, JSON.stringify(endpointData), async (err) => {
         if (err) {
             console.error('Error storing in Redis:', err);
             return res.status(500).send('Internal Server Error');
         }
+
+        if (req.body.type === 'websocket') {
+            try {
+                // Generate access token
+                const authString = Buffer.from(`${req.body.clientId}:${req.body.clientSecret}`).toString('base64');
+                const response = await axios.post(`https://zoom.us/oauth/token?grant_type=account_credentials&account_id=${req.body.accountId}`, {}, {
+                    headers: {
+                        Authorization: 'Basic ' + authString
+                    }
+                });
+                
+                const access_token = response.data.access_token;
+                subscriptionEndpointMap.set(req.body.subscriptionId, newEndpoint.split('/').pop());
+                // Use the generated access token to open the WebSocket connection
+                handleWebSocketConnection(req.body.subscriptionId, access_token);
+            } catch (error) {
+                console.error("Error generating access token or opening WebSocket connection:", error);
+                return res.status(500).send('Internal Server Error');
+            }
+        }
+
         console.log('Received Configuration:', req.body);
         console.log('Generated Endpoint URL:', newEndpoint);
         activeEndpoints.add(newEndpoint);
@@ -182,6 +207,11 @@ function handleWebhook(req, res) {
                 case 'custom':
                     customHeaderAuth(req, res, endpointData);
                     break;
+
+                    case 'websocket':
+                        handleWebSocketConnection(endpointData.config.subscriptionID, currentAccess_token, endpointId);
+    break;
+
             }
         });
     });
@@ -350,6 +380,53 @@ function tokenAuth(req, res) {
     });
 }
 
+function handleWebSocketConnection(subscriptionID, access_token, endpointId) {
+
+    const webSocketUrl = `wss://ws.zoom.us/ws?subscriptionId=${subscriptionID}&access_token=${access_token}`;
+    //const endpointId = req.params.id;
+    
+    console.log("[Zoom WebSocket] URL:", webSocketUrl);
+    
+    const zoomWebSocket = new WebSocket(webSocketUrl);
+    zoomWebSocketMap.set(subscriptionID, zoomWebSocket);
+
+    zoomWebSocket.on('open', () => {
+        console.log("[Zoom WebSocket] Connected to WebSocket");
+    
+        const heartbeatMessage = {
+            module: "heartbeat"
+        };
+    
+        setInterval(() => {
+            zoomWebSocket.send(JSON.stringify(heartbeatMessage));
+            console.log('[Zoom WebSocket] Heartbeat sent', heartbeatMessage);
+        }, 30000);
+    });
+
+    zoomWebSocket.on('message', (data) => {
+        const messageStr = data.toString('utf8');
+        console.log("[Zoom WebSocket] Decoded message:", messageStr);
+    
+        let parsedData;
+        try {
+            parsedData = JSON.parse(messageStr);
+        } catch (error) {
+            console.error("[Zoom WebSocket] Error parsing WebSocket message:", error);
+            return;
+        }
+        
+        const endpointId = subscriptionEndpointMap.get(subscriptionID);
+
+        console.log("[Zoom WebSocket] Emitting data to endpoint:", endpointId);
+        console.log("[Zoom WebSocket] Received event:", parsedData.event || "Unknown Event", "with data:", parsedData);
+        io.to(endpointId).emit('webhookData', { ...parsedData, source: 'websocket' });
+    });
+
+    zoomWebSocket.on('close', () => {
+        console.log("[Zoom WebSocket] WebSocket connection closed");
+    });
+}
+
 
 
 
@@ -381,116 +458,4 @@ function sendData(req) {
         console.log("URL mismatch", url1);
     }
 }
-
-app.post('/configure-websocket', async (req, res) => {
-    const { clientID, clientSecret, accountID, subscriptionID } = req.body;
-    const newEndpoint = `${baseURL}/webhook-endpoint/${subscriptionID}`;  // Use subscriptionID as the endpoint
-    activeEndpoints.add(newEndpoint);
-    const endpointData = {
-        config: req.body,
-        tokens: [],
-        events: []
-    };
-
-    let access_token;
-    console.log("Received request body:", req.body);
-
-    // Save to Redis
-    client.set(newEndpoint, JSON.stringify(endpointData), async (err) => {
-        if (err) {
-            console.error('Error storing in Redis:', err);
-            return res.status(500).send('Internal Server Error');
-        }
-
-        try {
-            // Generate access token
-            const authString = Buffer.from(`${clientID}:${clientSecret}`).toString('base64');
-            let response = await axios.post(`https://zoom.us/oauth/token?grant_type=account_credentials&account_id=${accountID}`, {}, {
-                headers: {
-                    Authorization: 'Basic ' + authString
-                }
-            });
-
-            access_token = response.data.access_token;
-
-            console.log("Access token", access_token)
-
-            // Initiate WebSocket connection
-            handleWebSocketConnection(req.body.subscriptionID, access_token);
-
-            console.log('Received Configuration for WebSocket:', req.body);
-            console.log('Generated Endpoint URL for WebSocket:', newEndpoint);
-            res.json({ endpointURL: newEndpoint });
-        } catch (error) {
-            console.error('Error generating access token:', error.message);
-            console.error("client ID", clientID);
-            console.error("client secret", clientSecret);
-            console.error("account id", accountID);
-            console.error("subscription id", subscriptionID);
-            console.error("access token", access_token);
-            res.status(500).send('Error generating access token');
-        }
-    });
-});
-
-
-
-
-function handleWebSocketConnection(subscriptionID, access_token) {
-    const webSocketUrl = `wss://ws.zoom.us/ws?subscriptionId=${subscriptionID}&access_token=${access_token}`;
-    const endpointId = subscriptionID; // Define endpointId at the start of the function
-    
-    // Print the WebSocket URL
-    console.log("[Zoom WebSocket] URL:", webSocketUrl);
-    
-    const zoomWebSocket = new WebSocket(webSocketUrl);
-    zoomWebSocketMap.set(subscriptionID, zoomWebSocket);
-
-    zoomWebSocket.on('open', () => {
-        console.log("[Zoom WebSocket] Connected to WebSocket");
-    
-        // Define the heartbeat message
-        const heartbeatMessage = {
-            module: "heartbeat"
-        };
-    
-        // Start sending heartbeat messages every 30 seconds
-        setInterval(() => {
-            zoomWebSocket.send(JSON.stringify(heartbeatMessage));
-            console.log('[Zoom WebSocket] Heartbeat sent', heartbeatMessage);
-            // Emitting this heartbeat to the frontend may not be necessary, 
-            // but if you want to track it there, you can keep the below line
-         //   io.to(endpointId).emit('webhookData', { event_name: 'Heartbeat', source: 'websocket' });
-        }, 30000); // 30000 milliseconds = 30 seconds
-    });
-
-    zoomWebSocket.on('message', (data) => {
-        // Decode the buffer to a string
-        const messageStr = data.toString('utf8');
-        console.log("[Zoom WebSocket] Decoded message:", messageStr);
-    
-        // Parse the string to JSON
-        let parsedData;
-        try {
-            parsedData = JSON.parse(messageStr);
-        } catch (error) {
-            console.error("[Zoom WebSocket] Error parsing WebSocket message:", error);
-            return;
-        }
-        
-        // Handle the parsed data
-        console.log("[Zoom WebSocket] Parsed WebSocket data:", parsedData);
-        
-        console.log("[Zoom WebSocket] Emitting data to endpoint:", endpointId);
-        console.log("[Zoom WebSocket] Parsed request body being pushed:", parsedData);
-        io.to(endpointId).emit('webhookData', { ...parsedData, source: 'websocket' });
-
-    });
-
-    zoomWebSocket.on('close', () => {
-        console.log("[Zoom WebSocket] WebSocket connection closed");
-    });
-}
-
-
 
