@@ -17,15 +17,15 @@ const baseURL = "https://ojus.ngrok.dev";
 const server = http.createServer(app);
 const io = socketIo(server, {
     cors: {
-      origin: "*", 
-      methods: ["GET", "POST"]
+        origin: "*",
+        methods: ["GET", "POST"]
     }
-  });
-  const WebSocket = require('ws');
+});
+const WebSocket = require('ws');
 
 
 const clientEndpointMap = new Map();
-const zoomWebSocketMap = new Map(); 
+const zoomWebSocketMap = new Map();
 const subscriptionEndpointMap = new Map();
 
 // Middleware
@@ -45,18 +45,18 @@ const client = redis.createClient({
     port: 6379
 });
 
-client.on('connect', function() {
+client.on('connect', function () {
     console.log('Connected to Redis');
 });
 
-client.on('error', function(err) {
+client.on('error', function (err) {
     console.log('Redis error: ' + err);
 });
 
 
 io.on('connection', (socket) => {
     console.log('Client connected');
-   
+
     // Extract endpointId from the socket's handshake query
     const endpointId = socket.handshake.query.endpointId;
     if (endpointId) {
@@ -90,7 +90,7 @@ app.post('/configure-webhook', (req, res) => {
             clientSecret: req.body.clientSecret,
             secretToken: req.body.secretToken
         };
-    
+
         // Store the clientId and clientSecret in a hash. If the clientId already exists, its value will be updated.
         client.hset(oauthEndpoint, oauthData.clientId, oauthData.clientSecret, (err) => {
             if (err) {
@@ -99,7 +99,7 @@ app.post('/configure-webhook', (req, res) => {
             }
         });
     }
-    
+
 
     client.set(newEndpoint, JSON.stringify(endpointData), async (err) => {
         if (err) {
@@ -116,7 +116,7 @@ app.post('/configure-webhook', (req, res) => {
                         Authorization: 'Basic ' + authString
                     }
                 });
-                
+
                 const access_token = response.data.access_token;
                 subscriptionEndpointMap.set(req.body.subscriptionId, newEndpoint.split('/').pop());
                 // Use the generated access token to open the WebSocket connection
@@ -145,6 +145,7 @@ app.get('/webhook-endpoint/:id', (req, res) => {
 app.post('/webhook-endpoint/:id', handleWebhook);
 
 server.listen(PORT, () => {
+
     console.log(`Server is running on http://localhost:${PORT}`);
 });
 
@@ -208,9 +209,9 @@ function handleWebhook(req, res) {
                     customHeaderAuth(req, res, endpointData);
                     break;
 
-                    case 'websocket':
-                        handleWebSocketConnection(endpointData.config.subscriptionID, currentAccess_token, endpointId);
-    break;
+                case 'websocket':
+                    handleWebSocketConnection(endpointData.config.subscriptionID, currentAccess_token, endpointId);
+                    break;
 
             }
         });
@@ -258,9 +259,9 @@ function basicAuth(req, res) {
         if (req.headers.authorization === `Basic ${auth}`) {
             console.log('Webhook received from Zoom with basic auth:', req.body);
             console.log('Headers:', req.headers);
-            
+
             // Using the io object to emit to specific sockets
-            const endpointId = req.params.id; 
+            const endpointId = req.params.id;
             io.to(endpointId).emit('webhookData', sendData(req));
 
             return res.status(200).send('Webhook received');
@@ -293,7 +294,7 @@ function customHeaderAuth(req, res) {
             console.log('Webhook received with custom header:', req.headers, req.body);
 
             // Using the io object to emit to specific sockets
-            const endpointId = req.params.id; 
+            const endpointId = req.params.id;
             io.to(endpointId).emit('webhookData', sendData(req));
 
             return res.status(200).send('Webhook received');
@@ -310,7 +311,7 @@ function webhookOAuth(req, res) {
     const authHeader = req.headers.authorization;
     if (authHeader) {
         const [clientId, clientSecret] = Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
-        
+
         client.hget(oauthEndpoint, clientId, (err, storedClientSecret) => {
             if (err) {
                 console.error('Error fetching OAuth config from Redis:', err);
@@ -320,24 +321,24 @@ function webhookOAuth(req, res) {
             if (storedClientSecret && clientSecret === storedClientSecret) {
                 const access_token = jwt.sign({ clientId }, clientSecret, { expiresIn: '1h' });
                 const newTokenKey = `${oauthEndpoint}:tokens`;
-                
-client.lpush(newTokenKey, access_token, (err) => {
-    if (err) {
-        console.error('Error storing access token in Redis:', err);
-        return res.status(500).send('Internal Server Error');
-    } else {
-        // Optionally, limit the list length to a specific number to prevent it from growing indefinitely
-        client.ltrim(newTokenKey, 0, 9);  // This keeps the latest 10 tokens
 
-        const responseJson = {
-            "access_token": access_token,
-            "token_type": "bearer",
-            "expires_in": "3599"
-        };
-        return res.status(200).json(responseJson);
-       
+                client.lpush(newTokenKey, access_token, (err) => {
+                    if (err) {
+                        console.error('Error storing access token in Redis:', err);
+                        return res.status(500).send('Internal Server Error');
+                    } else {
+                        // Optionally, limit the list length to a specific number to prevent it from growing indefinitely
+                        client.ltrim(newTokenKey, 0, 9);  // This keeps the latest 10 tokens
+
+                        const responseJson = {
+                            "access_token": access_token,
+                            "token_type": "bearer",
+                            "expires_in": "3599"
+                        };
+                        return res.status(200).json(responseJson);
+
                     }
-                    
+
                 });
                 console.log(access_token);
             } else {
@@ -384,19 +385,19 @@ function handleWebSocketConnection(subscriptionID, access_token, endpointId) {
 
     const webSocketUrl = `wss://ws.zoom.us/ws?subscriptionId=${subscriptionID}&access_token=${access_token}`;
     //const endpointId = req.params.id;
-    
+
     console.log("[Zoom WebSocket] URL:", webSocketUrl);
-    
+
     const zoomWebSocket = new WebSocket(webSocketUrl);
     zoomWebSocketMap.set(subscriptionID, zoomWebSocket);
 
     zoomWebSocket.on('open', () => {
         console.log("[Zoom WebSocket] Connected to WebSocket");
-    
+
         const heartbeatMessage = {
             module: "heartbeat"
         };
-    
+
         setInterval(() => {
             zoomWebSocket.send(JSON.stringify(heartbeatMessage));
             console.log('[Zoom WebSocket] Heartbeat sent', heartbeatMessage);
@@ -406,7 +407,7 @@ function handleWebSocketConnection(subscriptionID, access_token, endpointId) {
     zoomWebSocket.on('message', (data) => {
         const messageStr = data.toString('utf8');
         console.log("[Zoom WebSocket] Decoded message:", messageStr);
-    
+
         let parsedData;
         try {
             parsedData = JSON.parse(messageStr);
@@ -414,7 +415,7 @@ function handleWebSocketConnection(subscriptionID, access_token, endpointId) {
             console.error("[Zoom WebSocket] Error parsing WebSocket message:", error);
             return;
         }
-        
+
         const endpointId = subscriptionEndpointMap.get(subscriptionID);
 
         console.log("[Zoom WebSocket] Emitting data to endpoint:", endpointId);
