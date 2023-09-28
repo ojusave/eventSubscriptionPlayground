@@ -65,8 +65,14 @@
             if (data.source === 'websocket') {
         // Handle WebSocket data
         const headers = data.header || {};
-        const body = JSON.parse(data.content || "{}");
-        
+        let body = {};
+if (typeof data.content === "string" && data.content.trim().startsWith("{")) {
+    try {
+        body = JSON.parse(data.content);
+    } catch (error) {
+        console.error("Error parsing data content:", data.content);
+    }
+}        
         detailsDiv.innerHTML = `<h2>Event Details (WebSocket):</h2>
                                 <p><strong>Module:</strong> ${data.module}</p>
                                 <p><strong>Event:</strong> ${body.event || 'N/A'}</p>

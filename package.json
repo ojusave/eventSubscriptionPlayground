@@ -22,5 +22,9 @@
     "notifications"
   ],
   "author": "Ojus Save",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "connect-redis": "^7.1.0",
+    "express-session": "^1.17.3"
+  }
 }
