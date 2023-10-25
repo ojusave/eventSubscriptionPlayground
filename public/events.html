@@ -56,6 +56,11 @@
         <h2>Event Details:</h2>
     </div>
 
+    <div id="expiredMessage" style="display: none;">
+        Endpoint expired!
+    </div>
+    
+
     <script>
         // Function to display event details
         function displayEventDetails(data) {
@@ -116,7 +121,38 @@ socket.on('webhookData', (data) => {
     eventsContainer.appendChild(eventItem);
 });
 
+
+socket.on('endpointExpired', (data) => {
+    const messageDiv = document.getElementById('expiredMessage');
+    messageDiv.innerText = "Page has expired"; // Update the message text
+    messageDiv.style.display = 'block';
+});
+
 </script>
+
+
+<script>
+    setTimeout(() => {
+     // Try fetching the endpoint to check if it's still valid
+     fetch(window.location.href)
+     .then(response => {
+         if (response.status === 404) {
+             return response.text();
+         }
+         throw new Error('Endpoint still valid');
+     })
+     .then(message => {
+         if (message === 'Page has expired') {
+             const messageDiv = document.getElementById('expiredMessage');
+             messageDiv.innerText = message; // Update the message text
+             messageDiv.style.display = 'block';
+         }
+     })
+     .catch(error => {
+         console.error(error);
+     });
+ }, 40000);
+ </script>
 
 </body>
 

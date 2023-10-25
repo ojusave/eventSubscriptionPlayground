@@ -11,16 +11,21 @@
     <h2>Select Authentication:</h2>
     <select id="authentication" onchange="showOptions()">
         <option value="default">Select</option>
-        <option value="none">No Header Authentication</option>
+        <option value="noHeader">No Header</option>
+        <option value="defaultAuth">Default Header Authentication</option>
         <option value="basic">Basic Header Authentication</option>
         <option value="custom">Custom Header Authentication</option>
         <option value="token">Token Header Authentication</option>
         <option value="websocket">Websocket</option>
     </select>
 
-    <div id="noneAuth" style="display: none;">
+    <div id="noHeaderDiv" style="display: none;">
+        <button onclick="NoHeader()">Submit No Header</button>
+    </div>
+
+    <div id="defaultAuth" style="display: none;">
         Secret Token: <input type="text" id="secretToken">
-        <button onclick="submitNone()">Submit</button>
+        <button onclick="submitDefault()">Submit</button>
     </div>
 
     <div id="customAuth" style="display: none;">
@@ -47,26 +52,31 @@
     </div>
 
     <div id="websocketForm" style="display: none;">
-       
+
         <input type="text" id="websocketClientID" placeholder="Client ID">
         <input type="text" id="websocketClientSecret" placeholder="Client Secret">
         <input type="text" id="websocketAccountId" placeholder="Account ID">
         <input type="text" id="websocketSubscriptionId" placeholder="Subscription ID">
         <input type="button" value="Submit" onclick="submitWebsocket()">
     </div>
-    
+
 
     <script>
         function showOptions() {
             const authentication = document.getElementById("authentication").value;
-            document.getElementById("noneAuth").style.display = 'none';
+            document.getElementById("defaultAuth").style.display = 'none';
             document.getElementById("basicAuth").style.display = 'none';
             document.getElementById("customAuth").style.display = 'none';
             document.getElementById("tokenAuth").style.display = 'none';
-            document.getElementById("websocketForm").style.display = 'none';  
+            document.getElementById("websocketForm").style.display = 'none';
+            document.getElementById("noHeaderDiv").style.display = 'none';  // Add this line
 
-            if (authentication === "none") {
-                document.getElementById("noneAuth").style.display = 'block';
+            if (authentication === "noHeader") {
+                document.getElementById("noHeaderDiv").style.display = 'block'; // Add this line
+            }
+
+            else if (authentication === "defaultAuth") {
+                document.getElementById("defaultAuth").style.display = 'block';
             } else if (authentication === "basic") {
                 document.getElementById("basicAuth").style.display = 'block';
             } else if (authentication === "custom") {
@@ -75,11 +85,28 @@
                 document.getElementById("tokenAuth").style.display = 'block';
             }
             else if (authentication === "websocket") {
-        document.getElementById("websocketForm").style.display = 'block';  
-    }
+                document.getElementById("websocketForm").style.display = 'block';
+            }
         }
 
-        function submitNone() {
+        function NoHeader() {
+            fetch('/configure-webhook', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    type: 'noHeader'
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    window.location.href = data.endpointURL;
+                });
+        }
+
+
+        function submitDefault() {
             const secretToken = document.getElementById("secretToken").value;
             fetch('/configure-webhook', {
                 method: 'POST',
@@ -87,7 +114,7 @@
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    type: 'none',
+                    type: 'defaultAuth',
                     secretToken: secretToken
                 })
             })
@@ -169,28 +196,28 @@
 
         function submitWebsocket() {
             const clientId = document.getElementById("websocketClientID").value;
-    const clientSecret = document.getElementById("websocketClientSecret").value;
-    const accountId = document.getElementById("websocketAccountId").value;
-    const subscriptionId = document.getElementById("websocketSubscriptionId").value;
-    
-    fetch('/configure-webhook', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            type: 'websocket',
-            clientId: clientId,
-            clientSecret: clientSecret,
-            accountId: accountId,
-            subscriptionId: subscriptionId
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        window.location.href = data.endpointURL;
-    });
-}
+            const clientSecret = document.getElementById("websocketClientSecret").value;
+            const accountId = document.getElementById("websocketAccountId").value;
+            const subscriptionId = document.getElementById("websocketSubscriptionId").value;
+
+            fetch('/configure-webhook', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    type: 'websocket',
+                    clientId: clientId,
+                    clientSecret: clientSecret,
+                    accountId: accountId,
+                    subscriptionId: subscriptionId
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    window.location.href = data.endpointURL;
+                });
+        }
 
     </script>
 </body>

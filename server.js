@@ -1,11 +1,4 @@
-const {
-    app,
-    server,
-    PORT,
-    path,
-    crypto,
-    WebSocket
-} = require('./config/config');
+const {app,server,PORT,path,crypto,WebSocket} = require('./config/config');
 
 const middleware = require('./middleware/middleware');
 
@@ -25,6 +18,7 @@ app.get('/', (req, res) => {
 
 
 const { client, clearRedisCache } = require('./services/redis');
+
 
 
 
