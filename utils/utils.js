@@ -44,7 +44,7 @@ function defaultHeaders(req, res) {
 function basicAuth(req, res) {
     const endpointId = req.params.id;
     const endpointURL = `${baseURL}/webhook-endpoint/${endpointId}`;
-    const storedEndpointData = webhookConfigurations[endpointId];
+    const storedEndpointData = cache.get('webhookConfigurations', endpointId);
 
     if (storedEndpointData === undefined || storedEndpointData === null) {
         console.error("No data found for endpoint:", endpointId);
@@ -71,7 +71,7 @@ function basicAuth(req, res) {
 function customHeaderAuth(req, res) {
     const endpointId = req.params.id;
     const endpointURL = `${baseURL}/webhook-endpoint/${endpointId}`;
-    const storedEndpointData = webhookConfigurations[endpointId];
+    const storedEndpointData = cache.get('webhookConfigurations', endpointId);
 
     if (storedEndpointData === undefined || storedEndpointData === null) {
         console.error("No data found for endpoint:", endpointId);

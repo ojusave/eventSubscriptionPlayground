@@ -112,11 +112,16 @@ module.exports.webhookRoutes = (app) => {
             console.log('Webhook received from Zoom:', req.body);
             console.log('Headers:', req.headers);
             io.to(endpointId).emit('webhookData', sendData(req, activeEndpoints));
-
-            return res.status(200).json({
+        
+            const responseData = {
                 plainToken: req.body.payload.plainToken,
                 encryptedToken: hashForValidate
-            });
+            };
+            console.log('Sending to Zoom:', responseData);
+            
+            
+            return res.status(200).json(responseData);
+
         }
 
         switch (endpointData.config.type) {
